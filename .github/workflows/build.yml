@@ -23,13 +23,7 @@ jobs:
         run: chmod +x gradlew || true
 
       - name: Assemble release
-        run: |
-          if [ -f ./gradlew ]; then
-            ./gradlew assembleRelease --no-daemon
-          else
-            gradle wrapper --gradle-version 8.7
-            ./gradlew assembleRelease --no-daemon
-          fi
+        run: ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
