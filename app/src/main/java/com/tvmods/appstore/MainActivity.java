@@ -25,9 +25,9 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         instance = this;
-        setContentView(R.layout.activity_main);
+        web = new WebView(this);
+        setContentView(web);
         engine = new SideloadEngine(this);
-        web = findViewById(R.id.web);
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
