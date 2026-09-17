@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"/>
+<title>Tv.Mods AppStore</title>
+<style>
+  :root{
+    --bg:#07070a; --card:#121218; --line:#2a2a36; --red:#ff2d2d; --text:#f4f4f6; --muted:#9a9aa8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  body{display:flex;flex-direction:column}
+  header{
+    padding:22px 28px 14px;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .brand{font-weight:800;letter-spacing:.4px;font-size:22px}
+  .brand span{color:var(--red)}
+  .perm{font-size:13px;color:var(--muted)}
+  .perm.ok{color:#3ddc84}
+  main{flex:1;padding:22px;overflow:auto}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;
+    display:flex;flex-direction:column;gap:12px;
+  }
+  .row{display:flex;gap:14px;align-items:center}
+  .pfp{width:72px;height:72px;border-radius:16px;object-fit:cover;border:2px solid var(--red);background:#000}
+  h2{font-size:18px}
+  p{color:var(--muted);font-size:13px;line-height:1.4}
+  button{
+    margin-top:auto;border:0;border-radius:12px;padding:12px 14px;font-weight:700;font-size:15px;
+    background:var(--red);color:#fff;cursor:pointer;
+  }
+  button:disabled{opacity:.55}
+  .bar{height:8px;background:#1c1c24;border-radius:99px;overflow:hidden;display:none}
+  .bar > i{display:block;height:100%;width:0;background:var(--red)}
+  .status{min-height:18px;font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Tv.<span>Mods</span> AppStore</div>
+  <div id="perm" class="perm">checking perms…</div>
+</header>
+<main>
+  <div class="grid">
+    <article class="card" id="spm">
+      <div class="row">
+        <img class="pfp" src="img/IMG_9410.jpeg" alt="SPM Gorilla Tag"/>
+        <div>
+          <h2>SPM GORILLA TAG</h2>
+          <p>Installs patcher + game automatically after you allow unknown apps.</p>
+        </div>
+      </div>
+      <div class="bar" id="bar"><i id="fill"></i></div>
+      <div class="status" id="status"></div>
+      <button id="btn" onclick="installSpm()">Sideload</button>
+    </article>
+  </div>
+</main>
+<script>
+function hasBridge(){ return typeof TvMods !== 'undefined'; }
+
+function refreshPerms(){
+  const el = document.getElementById('perm');
+  if(!hasBridge()){ el.textContent = 'open this APK on Quest'; return; }
+  const ok = TvMods.hasInstallPermission();
+  el.textContent = ok ? 'install permission ON' : 'install permission OFF — tap Sideload to enable';
+  el.className = 'perm' + (ok ? ' ok' : '');
+}
+window.onPermsChanged = function(){ refreshPerms(); };
+
+function setStatus(t){ document.getElementById('status').textContent = t || ''; }
+function setPct(n){
+  const bar = document.getElementById('bar');
+  const fill = document.getElementById('fill');
+  bar.style.display = 'block';
+  fill.style.width = Math.max(0, Math.min(100, n)) + '%';
+}
+
+window.onStoreEvent = function(ev){
+  if(!ev || !ev.type) return;
+  const btn = document.getElementById('btn');
+  if(ev.type === 'need_perms'){ setStatus('Allow install unknown apps, then tap Sideload again'); refreshPerms(); }
+  if(ev.type === 'download'){ btn.disabled = true; setPct(ev.pct||0); setStatus('Getting ' + ev.name + ' ' + (ev.pct||0) + '%'); }
+  if(ev.type === 'installing'){ setStatus('System installer… confirm if asked'); }
+  if(ev.type === 'confirm'){ setStatus('Confirm install on the system prompt'); }
+  if(ev.type === 'installed'){ setStatus('One package installed, continuing…'); }
+  if(ev.type === 'done'){ btn.disabled = false; setPct(100); setStatus('Both packages installed. Check Unknown Sources.'); }
+  if(ev.type === 'busy'){ setStatus('Already installing'); }
+  if(ev.type === 'error'){ btn.disabled = false; setStatus('Error: ' + (ev.msg||'failed')); }
+};
+
+function installSpm(){
+  if(!hasBridge()){ setStatus('Android bridge missing'); return; }
+  if(!TvMods.hasInstallPermission()){
+    TvMods.requestInstallPermission();
+    setStatus('Turn on Allow from this source, then tap Sideload again');
+    return;
+  }
+  document.getElementById('btn').disabled = true;
+  setStatus('Starting…');
+  TvMods.installSpm();
+}
+
+refreshPerms();
+</script>
+</body>
+</html>
